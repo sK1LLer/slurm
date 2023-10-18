@@ -1,0 +1,86 @@
+# ---
+# - name: "slurm"
+  # hosts: "server"
+  # become: true
+  # vars_files:
+  #   - vars.yml
+  # tasks:
+
+- name: "install packages"
+  ansible.builtin.yum: 
+    name:
+      - postgresql
+      - postgresql-server
+      - postgresql-contrib
+      - postgresql-libs
+      - postgresql-devel
+      # - python3-devel
+      # - python3-psycopg2
+    state: present
+
+- name: "Install Python packages"
+  ansible.builtin.pip:
+    name:
+      - psycopg2-binary
+    state: present
+
+- name: "Is postgre initialized?"
+  ansible.builtin.stat:
+    path: "/var/lib/pgsql/data/pg_hba.conf"
+  register: postgres_data
+  
+- name: "Initialize postgre"
+  ansible.builtin.shell: "postgresql-setup initdb"
+  when: not postgres_data.stat.exists
+
+- name: Start and enable service
+  ansible.builtin.service:
+    name: postgresql
+    state: started
+    enabled: true
+
+- name: "Create app database"
+  become: true
+  become_user: postgres
+  postgresql_db:
+    state: present
+    name: "{{ db_name }}"
+
+- name: "Create db user"
+  become: true
+  become_user: postgres
+  postgresql_user:
+    state: present
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+- name: "Grant db user access to app db"
+
+  become: true
+  become_user: postgres
+  postgresql_privs:
+    type: database
+    database: "{{ db_name }}"
+    roles: "{{ db_user }}"
+    grant_option: no
+    privs: all
+
+- name: "Allow md5 connection for the db user"
+  become: true
+  become_user: postgres
+  postgresql_pg_hba:
+    dest: "~/data/pg_hba.conf"
+    contype: host
+    databases: all
+    method: md5
+    users: "{{ db_user }}"
+    create: true
+  notify: "restart postgres"
+
+  # handlers:
+  #   - name: "restart postgres"
+  #     service: "name=postgresql state=restarted"
+
+  # - name: "install nginx"
+  #   ansible.builtin.yum:
+  #     name: "nginx"
+  #     state: present

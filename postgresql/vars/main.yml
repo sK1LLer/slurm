@@ -1,0 +1,3 @@
+db_user: ruby_app_user
+db_password: ruby_app_user
+db_name: ruby_app

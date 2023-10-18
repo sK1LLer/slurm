@@ -1,0 +1,8 @@
+---
+- name: "slurm.io, install postgre, nginx and ruby"
+  hosts: server
+  become: true
+  roles: 
+    # - "postgresql"
+    - "app"
+

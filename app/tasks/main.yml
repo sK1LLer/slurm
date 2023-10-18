@@ -1,0 +1,27 @@
+# - name: "copy app files"
+#   ansible.builtin.copy:
+#     src: "/home/vagrant/ansible/xpaste_practicum-master/"
+#     dest: "/home/vagrant/ruby_app/"
+
+- name: "install ruby"
+  ansible.builtin.shell: |
+    yum install centos-release-scl-rh centos-release-scl -y
+    yum --enablerepo=centos-sclo-rh -y install rh-ruby26 rh-ruby26-ruby-devel
+    scl enable rh-ruby26 bash -y
+
+- name: "install bundler"
+  ansible.builtin.shell: "gem install bundler:1.16.2"
+
+- name: "install nokogiri"
+  ansible.builtin.shell: "gem install nokogiri -v '1.8.2'"
+
+- name: "make exec"
+  ansible.builtin.shell: "chmod +x /home/vagrant/ruby_app/bin/*"
+- name: "bundle config"
+  ansible.builtin.shell: "/home/vagrant/ruby_app/bin/bundle config build.nokogiri --use-system-libraries"
+- name: "bundle install "
+  ansible.builtin.shell: "/home/vagrant/ruby_app/bin/bundle install --clean --no-cache --without development"
+
+################not sure if needed
+- name: "install devtools"
+  ansible.builtin.shell: "yum groupinstall 'Development Tools' -y"
